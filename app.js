@@ -13,7 +13,7 @@ const AppModule = require('./app/modules/index');
 const indexRoute = require('./routes/index');
 
 const {
-    AuthModule, CategoryModule, BalanceModule, ExpenseModule, MealModule, MessModule, UserModule, HouseRentModule,
+    AuthModule, CategoryModule, BalanceModule, ExpenseModule, MealModule, MessModule, UserModule, HouseRentModule, UtilityModule, BazaarModule, NoticeModule,
 } = AppModule;
 const { UserRoute } = UserModule;
 const { CategoryRoute } = CategoryModule;
@@ -22,6 +22,9 @@ const { ExpenseRoute } = ExpenseModule;
 const { MealRoute } = MealModule;
 const { MessRoute } = MessModule;
 const { HouseRentRoute } = HouseRentModule;
+const { UtilityRoute } = UtilityModule;
+const { BazaarRoute } = BazaarModule;
+const { NoticeRoute } = NoticeModule;
 
 const { AuthController, AuthRoute } = AuthModule;
 const authController = new AuthController();
@@ -54,6 +57,9 @@ app.use('/api/v1/expense', ExpenseRoute);
 app.use('/api/v1/meal', MealRoute);
 app.use('/api/v1/mess', MessRoute);
 app.use('/api/v1/house-rent', HouseRentRoute);
+app.use('/api/v1/utility', UtilityRoute);
+app.use('/api/v1/bazaar-schedule', BazaarRoute);
+app.use('/api/v1/notice', NoticeRoute);
 
 // Production static serving for Frontend SPA
 const frontendBuildPath = path.join(__dirname, 'frontend', 'dist');

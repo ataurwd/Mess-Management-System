@@ -6,6 +6,9 @@ const ExpenseModule = require('./expense/index');
 const MealModule = require('./meal/index');
 const MessModule = require('./mess/index');
 const HouseRentModule = require('./houseRent/index');
+const UtilityModule = require('./utility/index');
+const BazaarModule = require('./bazaar/index');
+const NoticeModule = require('./notice/index');
 
 module.exports = {
     AuthModule,
@@ -16,4 +19,7 @@ module.exports = {
     MealModule,
     MessModule,
     HouseRentModule,
+    UtilityModule,
+    BazaarModule,
+    NoticeModule,
 };

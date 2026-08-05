@@ -9,6 +9,9 @@ import { Expenses } from './components/Expenses';
 import { Categories } from './components/Categories';
 import { Members } from './components/Members';
 import { HouseRent } from './components/HouseRent';
+import { Utilities } from './components/Utilities';
+import { Settlement } from './components/Settlement';
+import { BazaarSchedule } from './components/BazaarSchedule';
 import api from './api/client';
 import { ShieldCheck, User as UserIcon, Bell, LogOut } from 'lucide-react';
 
@@ -53,6 +56,9 @@ export const App: React.FC = () => {
     if (pathname.includes('/expenses/list')) return 'All Expenses History';
     if (pathname.includes('/expenses')) return 'Mess Expenses';
     if (pathname.includes('/house-rent')) return 'House Rent & Per-Person Division';
+    if (pathname.includes('/utilities')) return 'Utility Bills & Per-Person Division';
+    if (pathname.includes('/settlement')) return 'Financial Settlement Ledger';
+    if (pathname.includes('/bazaar-schedule')) return 'Bazaar & Market Duty Schedule';
     if (pathname.includes('/meals/list')) return 'All Meal Logs History';
     if (pathname.includes('/meals')) return 'Daily Meal Log';
     if (pathname.includes('/categories')) return 'Category Management';
@@ -117,6 +123,9 @@ export const App: React.FC = () => {
             <Route path="/balances/*" element={<Balances />} />
             <Route path="/expenses/*" element={<Expenses />} />
             <Route path="/house-rent" element={<HouseRent />} />
+            <Route path="/utilities" element={<Utilities />} />
+            <Route path="/settlement" element={<Settlement />} />
+            <Route path="/bazaar-schedule" element={<BazaarSchedule />} />
             <Route path="/categories" element={<Categories />} />
             <Route path="/members" element={<Members />} />
             <Route path="*" element={<Navigate to="/dashboard" replace />} />

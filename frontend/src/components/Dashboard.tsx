@@ -95,6 +95,20 @@ export const Dashboard: React.FC = () => {
     queryClient.invalidateQueries({ queryKey: ['dashboard'] });
   };
 
+  // Fetch notices
+  const { data: notices = [] } = useQuery<any[]>({
+    queryKey: ['notices'],
+    queryFn: async () => {
+      try {
+        const res = await api.get('/v1/notice');
+        const list = res.data?.data;
+        return Array.isArray(list) ? list : [];
+      } catch (e) { return []; }
+    },
+  });
+
+  const pinnedNotice = notices[0];
+
   return (
     <div className="space-y-8">
       {/* Modern Emerald Hero Header */}
@@ -129,6 +143,27 @@ export const Dashboard: React.FC = () => {
           </button>
         </div>
       </div>
+
+      {/* Mess Notice Board Banner */}
+      {pinnedNotice && (
+        <div className="p-4 bg-gradient-to-r from-amber-500/10 via-amber-600/5 to-slate-900 border border-amber-500/30 rounded-2xl flex items-center justify-between gap-4 shadow-lg">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-amber-500/20 text-amber-400 rounded-xl shrink-0">
+              <Sparkles className="w-5 h-5 animate-pulse" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-bold uppercase text-amber-400 tracking-wider">Announcement: {pinnedNotice.title}</span>
+                <span className="text-[10px] text-slate-400">• {new Date(pinnedNotice.date).toLocaleDateString()}</span>
+              </div>
+              <p className="text-xs text-slate-200 mt-0.5">{pinnedNotice.content}</p>
+            </div>
+          </div>
+          <span className="text-[10px] text-amber-400 font-bold px-2 py-0.5 bg-amber-500/10 border border-amber-500/30 rounded-md shrink-0">
+            PINNED NOTICE
+          </span>
+        </div>
+      )}
 
       {/* 4 Green Theme KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
