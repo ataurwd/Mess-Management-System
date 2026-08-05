@@ -5,6 +5,7 @@ const CategoryModule = require('./category/index');
 const ExpenseModule = require('./expense/index');
 const MealModule = require('./meal/index');
 const MessModule = require('./mess/index');
+const HouseRentModule = require('./houseRent/index');
 
 module.exports = {
     AuthModule,
@@ -14,4 +15,5 @@ module.exports = {
     ExpenseModule,
     MealModule,
     MessModule,
+    HouseRentModule,
 };

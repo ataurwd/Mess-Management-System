@@ -7,6 +7,7 @@ import {
   Receipt, 
   Tags, 
   Users, 
+  Home,
   LogOut,
   Building2,
   ChevronRight,
@@ -29,6 +30,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ user, onLogout }) => {
     { path: '/meals', label: 'Daily Meals', icon: UtensilsCrossed },
     { path: '/balances', label: 'Deposits / Balance', icon: Wallet },
     { path: '/expenses', label: 'Expenses', icon: Receipt },
+    { path: '/house-rent', label: 'House Rent', icon: Home },
     { path: '/categories', label: 'Categories', icon: Tags },
     { path: '/members', label: 'Mess Members', icon: Users },
   ];

@@ -8,6 +8,7 @@ import { Balances } from './components/Balances';
 import { Expenses } from './components/Expenses';
 import { Categories } from './components/Categories';
 import { Members } from './components/Members';
+import { HouseRent } from './components/HouseRent';
 import api from './api/client';
 import { ShieldCheck, User as UserIcon, Bell, LogOut } from 'lucide-react';
 
@@ -51,6 +52,7 @@ export const App: React.FC = () => {
     if (pathname.includes('/balances')) return 'Member Deposits & Balance';
     if (pathname.includes('/expenses/list')) return 'All Expenses History';
     if (pathname.includes('/expenses')) return 'Mess Expenses';
+    if (pathname.includes('/house-rent')) return 'House Rent & Per-Person Division';
     if (pathname.includes('/meals/list')) return 'All Meal Logs History';
     if (pathname.includes('/meals')) return 'Daily Meal Log';
     if (pathname.includes('/categories')) return 'Category Management';
@@ -114,6 +116,7 @@ export const App: React.FC = () => {
             <Route path="/meals/*" element={<Meals />} />
             <Route path="/balances/*" element={<Balances />} />
             <Route path="/expenses/*" element={<Expenses />} />
+            <Route path="/house-rent" element={<HouseRent />} />
             <Route path="/categories" element={<Categories />} />
             <Route path="/members" element={<Members />} />
             <Route path="*" element={<Navigate to="/dashboard" replace />} />
