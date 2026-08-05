@@ -21,7 +21,7 @@ const { BalanceRoute } = BalanceModule;
 const { ExpenseRoute } = ExpenseModule;
 const { MealRoute } = MealModule;
 const { MessRoute } = MessModule;
-
+//update code
 const { AuthController, AuthRoute } = AuthModule;
 const authController = new AuthController();
 require('./config/database')();
