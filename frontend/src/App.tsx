@@ -74,7 +74,7 @@ export const App: React.FC = () => {
       {/* Main Container */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         {/* Top Navbar */}
-        <header className="h-16 bg-slate-900/60 border-b border-slate-800/80 backdrop-blur-md px-8 flex items-center justify-between sticky top-0 z-30">
+        <header className="h-[4.5rem] bg-slate-900/60 border-b border-slate-800/80 backdrop-blur-md px-8 flex items-center justify-between sticky top-0 z-30">
           <div className="flex items-center gap-3">
             <h2 className="text-base font-bold text-white tracking-tight">{getPageTitle(location.pathname)}</h2>
             <span className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
