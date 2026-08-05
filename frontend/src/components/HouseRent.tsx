@@ -80,8 +80,12 @@ export const HouseRent: React.FC = () => {
   const { data: rentConfig = { totalRent: 16500 }, isLoading: loadingConfig } = useQuery<RentConfig>({
     queryKey: ['houseRentConfig'],
     queryFn: async () => {
-      const res = await api.get('/v1/house-rent/config');
-      return res.data?.data || { totalRent: 16500 };
+      try {
+        const res = await api.get('/v1/house-rent/config');
+        return res.data?.data || { totalRent: 16500 };
+      } catch (e) {
+        return { totalRent: 16500 };
+      }
     },
   });
 
@@ -95,9 +99,13 @@ export const HouseRent: React.FC = () => {
   const { data: payments = [], isLoading: loadingPayments } = useQuery<RentPayment[]>({
     queryKey: ['houseRentPayments'],
     queryFn: async () => {
-      const res = await api.get('/v1/house-rent/payments');
-      const list = res.data?.data;
-      return Array.isArray(list) ? list : [];
+      try {
+        const res = await api.get('/v1/house-rent/payments');
+        const list = res.data?.data;
+        return Array.isArray(list) ? list : [];
+      } catch (e) {
+        return [];
+      }
     },
   });
 
