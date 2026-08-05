@@ -5,10 +5,6 @@ import { User } from '../types';
 import { getCurrentUser } from '../utils/auth';
 import { 
   Zap, 
-  Flame, 
-  Wifi, 
-  UserCheck, 
-  Droplet, 
   Plus, 
   Trash2, 
   CheckCircle2, 
@@ -17,7 +13,9 @@ import {
   DollarSign, 
   Calendar,
   CreditCard,
-  PieChart
+  PieChart,
+  User as UserIcon,
+  X
 } from 'lucide-react';
 
 interface UtilityBill {
@@ -50,14 +48,17 @@ export const Utilities: React.FC = () => {
   const [month, setMonth] = useState(
     new Date().toLocaleString('default', { month: 'long', year: 'numeric' })
   );
-  const [message, setMessage] = useState('');
-  const [error, setError] = useState('');
+  const [billMessage, setBillMessage] = useState('');
+  const [billError, setBillError] = useState('');
 
-  // Record Payment Form State
+  // Record Payment Modal / Form State
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [selectedUser, setSelectedUser] = useState('');
   const [payAmount, setPayAmount] = useState<number | string>('');
   const [payMethod, setPayMethod] = useState('Cash');
   const [payNote, setPayNote] = useState('');
+  const [payMessage, setPayMessage] = useState('');
+  const [payError, setPayError] = useState('');
 
   // Search Filter
   const [searchTerm, setSearchTerm] = useState('');
@@ -108,9 +109,9 @@ export const Utilities: React.FC = () => {
       return res.data;
     },
     onSuccess: () => {
-      setMessage('Utility bill recorded successfully!');
+      setBillMessage('Utility bill recorded successfully!');
       setBillAmount('');
-      setError('');
+      setBillError('');
       queryClient.invalidateQueries({ queryKey: ['utilityBills'] });
     },
   });
@@ -131,11 +132,19 @@ export const Utilities: React.FC = () => {
       return res.data;
     },
     onSuccess: () => {
-      setMessage('Member utility payment recorded!');
+      setPayMessage('Member utility payment recorded successfully!');
       setPayAmount('');
       setPayNote('');
-      setError('');
+      setPayError('');
+
       queryClient.invalidateQueries({ queryKey: ['utilityPayments'] });
+      setTimeout(() => {
+        setShowPaymentModal(false);
+        setPayMessage('');
+      }, 1000);
+    },
+    onError: (err: any) => {
+      setPayError(err.response?.data?.message || err.message || 'Error saving payment');
     },
   });
 
@@ -152,12 +161,16 @@ export const Utilities: React.FC = () => {
   const handleAddBill = (e: React.FormEvent) => {
     e.preventDefault();
     if (!isAdmin) return;
+    setBillMessage('');
+    setBillError('');
     addBillMutation.mutate({ title, amount: Number(billAmount), month });
   };
 
   const handleAddPayment = (e: React.FormEvent) => {
     e.preventDefault();
     if (!isAdmin) return;
+    setPayMessage('');
+    setPayError('');
     addPaymentMutation.mutate({
       userId: selectedUser,
       amount: Number(payAmount),
@@ -198,6 +211,16 @@ export const Utilities: React.FC = () => {
     });
   }, [users, payments, perPersonUtility, month]);
 
+  const totalCollectedUtilities = useMemo(() => {
+    return memberBreakdown.reduce((sum, item) => sum + item.paid, 0);
+  }, [memberBreakdown]);
+
+  const filteredPayments = payments.filter((item) =>
+    (item.username || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (item.month || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (item.paymentMethod || '').toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
   return (
     <div className="space-y-8">
       {/* Top Header */}
@@ -205,12 +228,28 @@ export const Utilities: React.FC = () => {
         <div>
           <h1 className="text-2xl font-bold text-white tracking-tight flex items-center gap-2.5">
             <Zap className="w-7 h-7 text-amber-400" />
-            Utility Bills & Per-Person Division
+            Utility Bills & Member Division
           </h1>
           <p className="text-sm text-slate-400 mt-1">
-            Track Electricity, Gas, Wi-Fi, Water & Maid Salary with equal per-member division.
+            {isAdmin 
+              ? 'Record total utility bills, divide equally per member, and log member utility payments.' 
+              : 'Review total monthly utility bills, equal per-person division, and payment logs.'}
           </p>
         </div>
+
+        {isAdmin && (
+          <button
+            onClick={() => {
+              if (users.length > 0) setSelectedUser(users[0]._id);
+              setPayAmount(perPersonUtility);
+              setShowPaymentModal(true);
+            }}
+            className="px-4 py-2.5 bg-amber-600 hover:bg-amber-500 text-white rounded-xl text-xs font-bold flex items-center gap-2 transition-all self-start sm:self-auto shadow-lg shadow-amber-600/30"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Record Member Utility Payment</span>
+          </button>
+        )}
       </div>
 
       {/* KPI Cards */}
@@ -218,19 +257,19 @@ export const Utilities: React.FC = () => {
         <div className="glass-card p-6 rounded-2xl border border-slate-800">
           <span className="text-xs font-bold uppercase text-slate-400">Total Utilities ({month})</span>
           <p className="text-3xl font-extrabold text-amber-400 mt-2">৳{totalBillsThisMonth.toLocaleString()}</p>
-          <p className="text-xs text-slate-400 mt-1">Sum of all bills for this month</p>
+          <p className="text-xs text-slate-400 mt-1">Sum of Electricity, Gas, Wi-Fi, Maid</p>
         </div>
 
         <div className="glass-card p-6 rounded-2xl border border-slate-800">
-          <span className="text-xs font-bold uppercase text-slate-400">Utility Cost Per Member</span>
+          <span className="text-xs font-bold uppercase text-slate-400">Utility Share Per Member</span>
           <p className="text-3xl font-extrabold text-teal-400 mt-2">৳{perPersonUtility.toLocaleString()}</p>
           <p className="text-xs text-slate-400 mt-1">৳{totalBillsThisMonth.toLocaleString()} ÷ {membersCount} Members</p>
         </div>
 
         <div className="glass-card p-6 rounded-2xl border border-slate-800">
-          <span className="text-xs font-bold uppercase text-slate-400">Active Bills Count</span>
-          <p className="text-3xl font-extrabold text-blue-400 mt-2">{bills.length} Bills</p>
-          <p className="text-xs text-slate-400 mt-1">Electricity, Gas, Wi-Fi, Maid</p>
+          <span className="text-xs font-bold uppercase text-slate-400">Total Collected ({month})</span>
+          <p className="text-3xl font-extrabold text-emerald-400 mt-2">৳{totalCollectedUtilities.toLocaleString()}</p>
+          <p className="text-xs text-emerald-400 mt-1">Member utility payments received</p>
         </div>
       </div>
 
@@ -239,7 +278,7 @@ export const Utilities: React.FC = () => {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800 pb-4">
           <h3 className="font-bold text-white text-lg flex items-center gap-2">
             <PieChart className="w-5 h-5 text-amber-400" />
-            Member Utility Division ({month})
+            Member Utility Division & Payment Status ({month})
           </h3>
           <input
             type="text"
@@ -259,7 +298,7 @@ export const Utilities: React.FC = () => {
                 <th className="py-3 px-4">Amount Paid</th>
                 <th className="py-3 px-4">Due Balance</th>
                 <th className="py-3 px-4">Status</th>
-                {isAdmin && <th className="py-3 px-4 text-right">Quick Action</th>}
+                {isAdmin && <th className="py-3 px-4 text-right font-bold">Action</th>}
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-800/60">
@@ -297,8 +336,9 @@ export const Utilities: React.FC = () => {
                         onClick={() => {
                           setSelectedUser(item.userId);
                           setPayAmount(item.due > 0 ? item.due : perPersonUtility);
+                          setShowPaymentModal(true);
                         }}
-                        className="px-3 py-1.5 bg-amber-600/20 hover:bg-amber-600 text-amber-300 hover:text-white rounded-lg text-[11px] font-semibold border border-amber-500/30"
+                        className="px-3 py-1.5 bg-amber-600/20 hover:bg-amber-600 text-amber-300 hover:text-white rounded-lg text-[11px] font-bold border border-amber-500/30 transition-all"
                       >
                         Record Payment
                       </button>
@@ -321,7 +361,7 @@ export const Utilities: React.FC = () => {
               Add Utility Bill
             </h3>
 
-            {message && <div className="p-3 bg-emerald-500/10 text-emerald-400 rounded-xl text-xs">{message}</div>}
+            {billMessage && <div className="p-3 bg-emerald-500/10 text-emerald-400 rounded-xl text-xs">{billMessage}</div>}
 
             <form onSubmit={handleAddBill} className="space-y-4">
               <div>
@@ -365,7 +405,7 @@ export const Utilities: React.FC = () => {
               <button
                 type="submit"
                 disabled={addBillMutation.isPending}
-                className="w-full py-3 bg-amber-600 hover:bg-amber-500 text-white rounded-xl font-bold text-xs"
+                className="w-full py-3 bg-amber-600 hover:bg-amber-500 text-white rounded-xl font-bold text-xs shadow-lg shadow-amber-600/30"
               >
                 Add Utility Bill
               </button>
@@ -373,44 +413,192 @@ export const Utilities: React.FC = () => {
           </div>
         )}
 
-        {/* Bills Log Table */}
-        <div className={`${isAdmin ? 'lg:col-span-2' : 'lg:col-span-1'} glass-card p-6 rounded-2xl border border-slate-800`}>
-          <h3 className="font-bold text-white text-lg mb-4">Utility Bills Log History</h3>
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse text-xs">
-              <thead>
-                <tr className="border-b border-slate-800 text-slate-400 font-bold uppercase">
-                  <th className="py-3 px-4">Bill Title</th>
-                  <th className="py-3 px-4">Amount</th>
-                  <th className="py-3 px-4">For Month</th>
-                  <th className="py-3 px-4">Date</th>
-                  {isAdmin && <th className="py-3 px-4 text-right">Actions</th>}
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-800">
-                {bills.map((item) => (
-                  <tr key={item._id} className="hover:bg-slate-800/40">
-                    <td className="py-3.5 px-4 font-bold text-white">{item.title}</td>
-                    <td className="py-3.5 px-4 font-extrabold text-amber-400">৳{Number(item.amount).toLocaleString()}</td>
-                    <td className="py-3.5 px-4 text-slate-300">{item.month}</td>
-                    <td className="py-3.5 px-4 text-slate-400">{item.date ? new Date(item.date).toLocaleDateString() : 'N/A'}</td>
-                    {isAdmin && (
-                      <td className="py-3.5 px-4 text-right">
-                        <button
-                          onClick={() => deleteBillMutation.mutate(item._id)}
-                          className="p-1.5 text-slate-400 hover:text-rose-400 rounded-lg"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </td>
-                    )}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+        {/* Member Payments Log History Table */}
+        <div className={`${isAdmin ? 'lg:col-span-2' : 'lg:col-span-1'} glass-card p-6 rounded-2xl border border-slate-800 space-y-4`}>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800 pb-4">
+            <div>
+              <h3 className="font-bold text-white text-lg">Member Utility Payment Logs</h3>
+              <p className="text-xs text-slate-400">Log history of all member utility payments</p>
+            </div>
+
+            <div className="relative w-full sm:w-60">
+              <Search className="w-4 h-4 text-slate-500 absolute left-3 top-3" />
+              <input
+                type="text"
+                placeholder="Search member or month..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full bg-slate-800/80 border border-slate-700 rounded-xl pl-9 pr-4 py-2 text-xs text-white focus:outline-none focus:border-amber-500"
+              />
+            </div>
           </div>
+
+          {loadingPayments ? (
+            <div className="text-center py-12 text-slate-400 text-sm">Fetching payment logs...</div>
+          ) : filteredPayments.length === 0 ? (
+            <div className="text-center py-12 text-slate-500 text-sm">No utility payment records found.</div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse text-xs">
+                <thead>
+                  <tr className="border-b border-slate-800 text-slate-400 font-bold uppercase">
+                    <th className="py-3 px-4">Member Name</th>
+                    <th className="py-3 px-4">Amount Paid</th>
+                    <th className="py-3 px-4">Month</th>
+                    <th className="py-3 px-4">Method</th>
+                    <th className="py-3 px-4">Date</th>
+                    {isAdmin && <th className="py-3 px-4 text-right">Actions</th>}
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-800">
+                  {filteredPayments.map((item) => (
+                    <tr key={item._id} className="hover:bg-slate-800/40">
+                      <td className="py-3.5 px-4 font-bold text-white">{item.username || 'Member'}</td>
+                      <td className="py-3.5 px-4 font-extrabold text-emerald-400">৳{Number(item.amount).toLocaleString()}</td>
+                      <td className="py-3.5 px-4 text-slate-300">
+                        <span className="px-2 py-0.5 bg-slate-800 rounded border border-slate-700">{item.month}</span>
+                      </td>
+                      <td className="py-3.5 px-4 text-slate-300">{item.paymentMethod || 'Cash'}</td>
+                      <td className="py-3.5 px-4 text-slate-400">{item.date ? new Date(item.date).toLocaleDateString() : 'N/A'}</td>
+                      {isAdmin && (
+                        <td className="py-3.5 px-4 text-right">
+                          <button
+                            onClick={() => deletePaymentMutation.mutate(item._id)}
+                            className="p-1.5 text-slate-400 hover:text-rose-400 rounded-lg"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </td>
+                      )}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
       </div>
+
+      {/* RECORD MEMBER UTILITY PAYMENT MODAL */}
+      {showPaymentModal && (
+        <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 z-50">
+          <div className="w-full max-w-md bg-slate-900 border border-slate-800 rounded-3xl shadow-2xl p-6 relative">
+            <div className="flex items-center justify-between border-b border-slate-800 pb-4 mb-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-amber-600/10 border border-amber-500/20 text-amber-400 rounded-xl">
+                  <CreditCard className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-white text-lg">Record Utility Payment</h3>
+                  <p className="text-xs text-slate-400">Log member payment for monthly utilities</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowPaymentModal(false)}
+                className="p-1 text-slate-400 hover:text-white rounded-lg"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {payMessage && <div className="p-3 mb-4 bg-emerald-500/10 text-emerald-400 rounded-xl text-xs font-semibold">{payMessage}</div>}
+            {payError && <div className="p-3 mb-4 bg-rose-500/10 text-rose-400 rounded-xl text-xs font-semibold">{payError}</div>}
+
+            <form onSubmit={handleAddPayment} className="space-y-4">
+              <div>
+                <label className="block text-xs font-semibold text-slate-400 mb-1">Select Member</label>
+                <select
+                  value={selectedUser}
+                  onChange={(e) => setSelectedUser(e.target.value)}
+                  className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-amber-500"
+                >
+                  {users.map((u) => (
+                    <option key={u._id} value={u._id}>
+                      {u.username} ({u.email})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-400 mb-1">Payment Amount (৳)</label>
+                <div className="relative">
+                  <DollarSign className="w-4 h-4 text-slate-500 absolute left-3 top-3.5" />
+                  <input
+                    type="number"
+                    required
+                    min="1"
+                    placeholder={`e.g. ${perPersonUtility}`}
+                    value={payAmount}
+                    onChange={(e) => setPayAmount(e.target.value)}
+                    className="w-full bg-slate-800 border border-slate-700 rounded-xl pl-10 pr-4 py-2.5 text-sm text-white focus:outline-none focus:border-amber-500"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-400 mb-1">Month & Year</label>
+                <input
+                  type="text"
+                  required
+                  value={month}
+                  onChange={(e) => setMonth(e.target.value)}
+                  className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-amber-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-400 mb-1">Payment Method</label>
+                <select
+                  value={payMethod}
+                  onChange={(e) => setPayMethod(e.target.value)}
+                  className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-amber-500"
+                >
+                  <option value="Cash">Cash</option>
+                  <option value="bKash">bKash</option>
+                  <option value="Nagad">Nagad</option>
+                  <option value="Bank Transfer">Bank Transfer</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-400 mb-1">Note / Txn ID (Optional)</label>
+                <input
+                  type="text"
+                  placeholder="e.g. Paid via bKash"
+                  value={payNote}
+                  onChange={(e) => setPayNote(e.target.value)}
+                  className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-amber-500"
+                />
+              </div>
+
+              <div className="flex items-center justify-end gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowPaymentModal(false)}
+                  className="px-4 py-2.5 rounded-xl border border-slate-700 text-slate-300 text-xs font-semibold hover:bg-slate-800"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={addPaymentMutation.isPending}
+                  className="px-5 py-2.5 bg-amber-600 hover:bg-amber-500 text-white rounded-xl font-semibold text-xs shadow-lg shadow-amber-600/30 flex items-center gap-2"
+                >
+                  {addPaymentMutation.isPending ? (
+                    <>
+                      <RefreshCw className="w-4 h-4 animate-spin" />
+                      <span>Saving...</span>
+                    </>
+                  ) : (
+                    'Record Payment'
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
