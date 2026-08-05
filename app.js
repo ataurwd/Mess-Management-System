@@ -43,7 +43,6 @@ app.use(express.urlencoded({
 // Root Routing
 app.use(express.static(path.join(__dirname, 'public')));
 
-app.use('/', indexRoute);
 app.use('/api/auth', AuthRoute);
 app.all('/api/v1/*', authController.isAuthenticate);
 
@@ -54,18 +53,12 @@ app.use('/api/v1/expense', ExpenseRoute);
 app.use('/api/v1/meal', MealRoute);
 app.use('/api/v1/mess', MessRoute);
 
-
 // Production static serving for Frontend SPA
 const frontendBuildPath = path.join(__dirname, 'frontend', 'dist');
 app.use(express.static(frontendBuildPath));
 
-app.get('*', (req, res, next) => {
-    if (req.path.startsWith('/api')) {
-        return next();
-    }
-    res.sendFile(path.join(frontendBuildPath, 'index.html'), (err) => {
-        if (err) next();
-    });
+app.get('*', (req, res) => {
+    res.sendFile(path.join(frontendBuildPath, 'index.html'));
 });
 
 server.listen(port, () => {
