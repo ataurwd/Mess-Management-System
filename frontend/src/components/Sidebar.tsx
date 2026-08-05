@@ -93,33 +93,10 @@ export const Sidebar: React.FC<SidebarProps> = ({ user, onLogout }) => {
           </button>
         </div>
 
-        {/* User Info Widget */}
-        {user && (
-          <div className={`mx-3 my-3 p-2.5 bg-slate-800/40 rounded-2xl border border-slate-800 flex items-center gap-3 overflow-hidden ${collapsed ? 'justify-center' : ''}`}>
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-emerald-600/30 to-teal-600/30 border border-emerald-500/40 flex items-center justify-center font-bold text-emerald-400 text-xs shadow-inner shrink-0">
-              {user.username ? user.username[0].toUpperCase() : 'U'}
-            </div>
-            {!collapsed && (
-              <div className="overflow-hidden flex-1">
-                <p className="text-xs font-bold text-white truncate">{user.username}</p>
-                <div className="flex items-center gap-1.5 mt-0.5">
-                  <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider ${
-                    user.role === 'admin' 
-                      ? 'bg-amber-500/10 text-amber-400 border border-amber-500/30' 
-                      : 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30'
-                  }`}>
-                    {user.role || 'Member'}
-                  </span>
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-
         {/* Navigation Links */}
-        <nav className="flex-1 px-3 py-2 space-y-1.5 overflow-y-auto overflow-x-hidden">
+        <nav className="flex-1 px-3 py-4 space-y-1.5 overflow-y-auto overflow-x-hidden">
           {!collapsed && (
-            <div className="px-3 pb-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-500">Navigation</div>
+            <div className="px-3 pb-2 text-[10px] font-bold uppercase tracking-wider text-slate-500">Navigation Menu</div>
           )}
           {menuItems.map((item) => {
             const Icon = item.icon;
@@ -152,18 +129,6 @@ export const Sidebar: React.FC<SidebarProps> = ({ user, onLogout }) => {
             );
           })}
         </nav>
-
-        {/* Footer Logout */}
-        <div className="p-3 border-t border-slate-800/80">
-          <button
-            onClick={onLogout}
-            title={collapsed ? 'Sign Out' : undefined}
-            className={`w-full flex items-center justify-center ${collapsed ? 'px-0 py-2.5' : 'gap-2 px-4 py-2.5'} rounded-xl border border-rose-500/20 bg-rose-500/10 text-rose-400 hover:bg-rose-500/20 hover:border-rose-500/30 text-xs font-bold transition-all shadow-sm`}
-          >
-            <LogOut className="w-4 h-4 shrink-0" />
-            {!collapsed && <span>Sign Out</span>}
-          </button>
-        </div>
       </aside>
     </>
   );

@@ -9,7 +9,7 @@ import { Expenses } from './components/Expenses';
 import { Categories } from './components/Categories';
 import { Members } from './components/Members';
 import api from './api/client';
-import { ShieldCheck, User as UserIcon, Bell } from 'lucide-react';
+import { ShieldCheck, User as UserIcon, Bell, LogOut } from 'lucide-react';
 
 export const App: React.FC = () => {
   const [token, setToken] = useState<string | null>(localStorage.getItem('token'));
@@ -75,16 +75,34 @@ export const App: React.FC = () => {
             </span>
           </div>
 
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
             {user && (
-              <div className="flex items-center gap-3 bg-slate-800/60 border border-slate-700/60 px-3.5 py-1.5 rounded-xl text-xs font-semibold text-slate-200">
-                <UserIcon className="w-3.5 h-3.5 text-blue-400" />
-                <span>{user.username || user.email}</span>
-                <span className="px-1.5 py-0.5 bg-blue-600/20 text-blue-300 text-[10px] uppercase font-bold rounded">
-                  {user.role || 'User'}
+              <div className="flex items-center gap-3 bg-slate-900/80 border border-slate-800 px-3 py-1.5 rounded-2xl">
+                <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-emerald-600 to-teal-500 text-white font-bold text-xs flex items-center justify-center shadow-md">
+                  {user.username ? user.username[0].toUpperCase() : 'U'}
+                </div>
+                <div className="hidden md:block text-left">
+                  <p className="text-xs font-bold text-white leading-tight">{user.username}</p>
+                  <p className="text-[10px] text-slate-400 leading-tight">{user.email}</p>
+                </div>
+                <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider ${
+                  user.role === 'admin'
+                    ? 'bg-amber-500/10 text-amber-400 border border-amber-500/30'
+                    : 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30'
+                }`}>
+                  {user.role || 'Member'}
                 </span>
               </div>
             )}
+
+            <button
+              onClick={handleLogout}
+              className="flex items-center gap-2 px-3.5 py-2 rounded-xl border border-rose-500/20 bg-rose-500/10 text-rose-400 hover:bg-rose-500/20 hover:border-rose-500/30 text-xs font-bold transition-all shadow-sm"
+              title="Sign Out"
+            >
+              <LogOut className="w-4 h-4" />
+              <span className="hidden sm:inline">Sign Out</span>
+            </button>
           </div>
         </header>
 
