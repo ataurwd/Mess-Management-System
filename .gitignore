@@ -22,4 +22,3 @@ pids
 .npm
 .idea/
 .node_repl_history
-package-lock.json
