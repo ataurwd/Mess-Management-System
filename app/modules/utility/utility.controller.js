@@ -33,6 +33,17 @@ class UtilityController {
         }
     }
 
+    static async updateUtility(req, res) {
+        try {
+            const { utilityId } = req.params;
+            const payload = req.body;
+            const updated = await UtilityLib.updateUtility(utilityId, payload);
+            return res.status(200).json(response.single(true, 'Utility bill updated', updated));
+        } catch (e) {
+            return res.status(500).json(response.error(false, 'An error occur', `${e}`));
+        }
+    }
+
     static async addUtilityPayment(req, res) {
         try {
             const { messId } = req.auth;

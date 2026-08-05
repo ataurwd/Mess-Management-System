@@ -15,7 +15,8 @@ import {
   CreditCard,
   PieChart,
   User as UserIcon,
-  X
+  X,
+  Edit2
 } from 'lucide-react';
 
 interface UtilityBill {
@@ -102,6 +103,12 @@ export const Utilities: React.FC = () => {
     },
   });
 
+  const [showEditBillModal, setShowEditBillModal] = useState(false);
+  const [editBillId, setEditBillId] = useState('');
+  const [editBillTitle, setEditBillTitle] = useState('');
+  const [editBillAmount, setEditBillAmount] = useState<number | string>('');
+  const [editBillError, setEditBillError] = useState('');
+
   // 4. Mutations
   const addBillMutation = useMutation({
     mutationFn: async (payload: { title: string; amount: number; month: string }) => {
@@ -123,6 +130,21 @@ export const Utilities: React.FC = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['utilityBills'] });
+    },
+  });
+
+  const updateBillMutation = useMutation({
+    mutationFn: async (payload: { id: string; title: string; amount: number; month: string }) => {
+      const res = await api.put(`/v1/utility/bills/${payload.id}`, payload);
+      return res.data;
+    },
+    onSuccess: () => {
+      setBillMessage('Utility bill updated successfully!');
+      setShowEditBillModal(false);
+      queryClient.invalidateQueries({ queryKey: ['utilityBills'] });
+    },
+    onError: (err: any) => {
+      setEditBillError(err.response?.data?.message || err.message || 'Error updating bill');
     },
   });
 
@@ -164,6 +186,13 @@ export const Utilities: React.FC = () => {
     setBillMessage('');
     setBillError('');
     addBillMutation.mutate({ title, amount: Number(billAmount), month });
+  };
+
+  const handleUpdateBill = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!isAdmin) return;
+    setEditBillError('');
+    updateBillMutation.mutate({ id: editBillId, title: editBillTitle, amount: Number(editBillAmount), month });
   };
 
   const handleAddPayment = (e: React.FormEvent) => {
@@ -219,6 +248,11 @@ export const Utilities: React.FC = () => {
     (item.username || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
     (item.month || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
     (item.paymentMethod || '').toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const filteredBills = bills.filter((item) =>
+    (item.title || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (item.month || '').toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   return (
@@ -413,6 +447,81 @@ export const Utilities: React.FC = () => {
           </div>
         )}
 
+        {/* Monthly Added Utility Bills Table */}
+        <div className={`${isAdmin ? 'lg:col-span-2' : 'lg:col-span-1'} glass-card p-6 rounded-2xl border border-slate-800 space-y-4`}>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800 pb-4">
+            <div>
+              <h3 className="font-bold text-white text-lg">Monthly Added Utility Bills</h3>
+              <p className="text-xs text-slate-400">List of all added utility bills</p>
+            </div>
+            
+            <div className="relative w-full sm:w-60">
+              <Search className="w-4 h-4 text-slate-500 absolute left-3 top-3" />
+              <input
+                type="text"
+                placeholder="Search bill type or month..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full bg-slate-800/80 border border-slate-700 rounded-xl pl-9 pr-4 py-2 text-xs text-white focus:outline-none focus:border-amber-500"
+              />
+            </div>
+          </div>
+
+          {loadingBills ? (
+            <div className="text-center py-12 text-slate-400 text-sm">Fetching bills...</div>
+          ) : filteredBills.length === 0 ? (
+            <div className="text-center py-12 text-slate-500 text-sm">No utility bills added.</div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse text-xs">
+                <thead>
+                  <tr className="border-b border-slate-800 text-slate-400 font-bold uppercase">
+                    <th className="py-3 px-4">Bill Type</th>
+                    <th className="py-3 px-4">Amount</th>
+                    <th className="py-3 px-4">Month</th>
+                    <th className="py-3 px-4">Date Added</th>
+                    {isAdmin && <th className="py-3 px-4 text-right">Actions</th>}
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-800">
+                  {filteredBills.map((item) => (
+                    <tr key={item._id} className="hover:bg-slate-800/40">
+                      <td className="py-3.5 px-4 font-bold text-white">{item.title}</td>
+                      <td className="py-3.5 px-4 font-extrabold text-amber-400">৳{Number(item.amount).toLocaleString()}</td>
+                      <td className="py-3.5 px-4 text-slate-300">
+                        <span className="px-2 py-0.5 bg-slate-800 rounded border border-slate-700">{item.month}</span>
+                      </td>
+                      <td className="py-3.5 px-4 text-slate-400">{item.date ? new Date(item.date).toLocaleDateString() : 'N/A'}</td>
+                      {isAdmin && (
+                        <td className="py-3.5 px-4 text-right">
+                          <button
+                            onClick={() => {
+                              setEditBillId(item._id);
+                              setEditBillTitle(item.title);
+                              setEditBillAmount(item.amount);
+                              setMonth(item.month);
+                              setShowEditBillModal(true);
+                            }}
+                            className="p-1.5 text-slate-400 hover:text-amber-400 rounded-lg mr-2"
+                          >
+                            <Edit2 className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => deleteBillMutation.mutate(item._id)}
+                            className="p-1.5 text-slate-400 hover:text-rose-400 rounded-lg"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </td>
+                      )}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+
         {/* Member Payments Log History Table */}
         <div className={`${isAdmin ? 'lg:col-span-2' : 'lg:col-span-1'} glass-card p-6 rounded-2xl border border-slate-800 space-y-4`}>
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800 pb-4">
@@ -592,6 +701,99 @@ export const Utilities: React.FC = () => {
                     </>
                   ) : (
                     'Record Payment'
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+      {/* EDIT UTILITY BILL MODAL */}
+      {showEditBillModal && (
+        <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 z-50">
+          <div className="w-full max-w-md bg-slate-900 border border-slate-800 rounded-3xl shadow-2xl p-6 relative">
+            <div className="flex items-center justify-between border-b border-slate-800 pb-4 mb-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-amber-600/10 border border-amber-500/20 text-amber-400 rounded-xl">
+                  <Edit2 className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-white text-lg">Edit Utility Bill</h3>
+                  <p className="text-xs text-slate-400">Update the existing utility bill details</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowEditBillModal(false)}
+                className="p-1 text-slate-400 hover:text-white rounded-lg"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {editBillError && <div className="p-3 mb-4 bg-rose-500/10 text-rose-400 rounded-xl text-xs font-semibold">{editBillError}</div>}
+
+            <form onSubmit={handleUpdateBill} className="space-y-4">
+              <div>
+                <label className="block text-xs font-semibold text-slate-400 mb-1">Bill Type</label>
+                <select
+                  value={editBillTitle}
+                  onChange={(e) => setEditBillTitle(e.target.value)}
+                  className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-amber-500"
+                >
+                  <option value="Electricity Bill">Electricity Bill ⚡</option>
+                  <option value="Gas Bill">Gas Bill 🔥</option>
+                  <option value="Wi-Fi Internet">Wi-Fi Internet 📶</option>
+                  <option value="Maid / Cook Salary">Maid / Cook Salary 🧹</option>
+                  <option value="Water Bill">Water Bill 💧</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-400 mb-1">Amount (৳)</label>
+                <div className="relative">
+                  <DollarSign className="w-4 h-4 text-slate-500 absolute left-3 top-3.5" />
+                  <input
+                    type="number"
+                    required
+                    min="1"
+                    value={editBillAmount}
+                    onChange={(e) => setEditBillAmount(e.target.value)}
+                    className="w-full bg-slate-800 border border-slate-700 rounded-xl pl-10 pr-4 py-2.5 text-sm text-white focus:outline-none focus:border-amber-500"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-400 mb-1">Month & Year</label>
+                <input
+                  type="text"
+                  required
+                  value={month}
+                  onChange={(e) => setMonth(e.target.value)}
+                  className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-amber-500"
+                />
+              </div>
+
+              <div className="flex items-center justify-end gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowEditBillModal(false)}
+                  className="px-4 py-2.5 rounded-xl border border-slate-700 text-slate-300 text-xs font-semibold hover:bg-slate-800"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={updateBillMutation.isPending}
+                  className="px-5 py-2.5 bg-amber-600 hover:bg-amber-500 text-white rounded-xl font-semibold text-xs shadow-lg shadow-amber-600/30 flex items-center gap-2"
+                >
+                  {updateBillMutation.isPending ? (
+                    <>
+                      <RefreshCw className="w-4 h-4 animate-spin" />
+                      <span>Saving...</span>
+                    </>
+                  ) : (
+                    'Update Bill'
                   )}
                 </button>
               </div>

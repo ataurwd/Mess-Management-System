@@ -9,6 +9,7 @@ router.route('/bills')
     .post(AuthController.isAdmin, UtilityController.addUtility);
 
 router.route('/bills/:utilityId')
+    .put(AuthController.isAdmin, UtilityController.updateUtility)
     .delete(AuthController.isAdmin, UtilityController.deleteUtility);
 
 router.route('/payments')

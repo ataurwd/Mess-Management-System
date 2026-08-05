@@ -15,6 +15,10 @@ class UtilityLib {
         return await UtilityModel.findByIdAndDelete(utilityId);
     }
 
+    static async updateUtility(utilityId, payload) {
+        return await UtilityModel.findByIdAndUpdate(utilityId, payload, { new: true });
+    }
+
     static async addUtilityPayment(payload) {
         return await UtilityPaymentModel.create(payload);
     }
