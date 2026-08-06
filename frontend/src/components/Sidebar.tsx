@@ -16,7 +16,8 @@ import {
   ChevronRight,
   ChevronLeft,
   Menu,
-  X
+  X,
+  Settings
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -41,6 +42,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ user, onLogout, collapsed, set
     { path: '/bazaar-schedule', label: 'Bazaar Schedule', icon: ShoppingBag },
     { path: '/categories', label: 'Categories', icon: Tags },
     { path: '/members', label: 'Mess Members', icon: Users },
+    { path: '/settings', label: 'Settings', icon: Settings },
   ];
 
   return (

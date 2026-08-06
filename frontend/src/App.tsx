@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { Sidebar } from './components/Sidebar';
 import { AuthModal } from './components/AuthModal';
 import { Dashboard } from './components/Dashboard';
@@ -12,6 +12,7 @@ import { HouseRent } from './components/HouseRent';
 import { Utilities } from './components/Utilities';
 import { Settlement } from './components/Settlement';
 import { BazaarSchedule } from './components/BazaarSchedule';
+import { Settings } from './components/Settings';
 import api from './api/client';
 import { ShieldCheck, User as UserIcon, Bell, LogOut, Menu } from 'lucide-react';
 
@@ -19,6 +20,7 @@ export const App: React.FC = () => {
   const [token, setToken] = useState<string | null>(localStorage.getItem('token'));
   const [user, setUser] = useState<any>(null);
   const location = useLocation();
+  const navigate = useNavigate();
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
@@ -65,6 +67,7 @@ export const App: React.FC = () => {
     if (pathname.includes('/meals')) return 'Daily Meal Log';
     if (pathname.includes('/categories')) return 'Category Management';
     if (pathname.includes('/members')) return 'Mess Members Directory';
+    if (pathname.includes('/settings')) return 'Account Settings';
     return 'Overview Dashboard';
   };
 
@@ -100,13 +103,17 @@ export const App: React.FC = () => {
 
           <div className="flex items-center gap-3">
             {user && (
-              <div className="flex items-center gap-3 bg-slate-900/80 border border-slate-800 px-3 py-1.5 rounded-2xl">
+              <button
+                onClick={() => navigate('/settings')}
+                className="flex items-center gap-3 bg-slate-900/80 border border-slate-800 px-3 py-1.5 rounded-2xl hover:border-emerald-500/40 hover:bg-slate-800/80 transition-all group"
+                title="Account Settings"
+              >
                 <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-emerald-600 to-teal-500 text-white font-bold text-xs flex items-center justify-center shadow-md">
                   {user.username ? user.username[0].toUpperCase() : 'U'}
                 </div>
                 <div className="hidden md:block text-left">
                   <p className="text-xs font-bold text-white leading-tight">{user.username}</p>
-                  <p className="text-[10px] text-slate-400 leading-tight">{user.email}</p>
+                  <p className="text-[10px] text-slate-400 leading-tight group-hover:text-emerald-400 transition-colors">Settings →</p>
                 </div>
                 <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider ${
                   user.role === 'admin'
@@ -115,7 +122,7 @@ export const App: React.FC = () => {
                 }`}>
                   {user.role || 'Member'}
                 </span>
-              </div>
+              </button>
             )}
 
             <button
@@ -143,6 +150,7 @@ export const App: React.FC = () => {
             <Route path="/bazaar-schedule" element={<BazaarSchedule />} />
             <Route path="/categories" element={<Categories />} />
             <Route path="/members" element={<Members />} />
+            <Route path="/settings" element={<Settings />} />
             <Route path="*" element={<Navigate to="/dashboard" replace />} />
           </Routes>
         </main>
