@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../api/client';
 import { User, Category } from '../types';
 import { getCurrentUser } from '../utils/auth';
-import { Receipt, Plus, Calendar, User as UserIcon, CheckCircle2, DollarSign, Tags, FileText, ListFilter, Trash2, Search, RefreshCw } from 'lucide-react';
+import { Receipt, Plus, Calendar, User as UserIcon, CheckCircle2, DollarSign, Tags, FileText, ListFilter, Trash2, Search, RefreshCw, UtensilsCrossed, Wallet } from 'lucide-react';
 
 interface ExpenseItem {
   _id: string;
@@ -70,6 +70,8 @@ export const Expenses: React.FC = () => {
     },
   });
 
+
+
   // 4. TanStack Mutation: Add Expense
   const addExpenseMutation = useMutation({
     mutationFn: async (payload: { userId: string; amount: number; date: string; categoryId?: string; itemDetails: string; summary: string }) => {
@@ -132,6 +134,8 @@ export const Expenses: React.FC = () => {
     (item.category || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
     (item.summary || item.itemDetails || '').toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  const recentExpenses = [...expensesList].reverse().slice(0, 5);
 
   return (
     <div className="space-y-8">
@@ -211,7 +215,7 @@ export const Expenses: React.FC = () => {
                   >
                     {users.map((u) => (
                       <option key={u._id} value={u._id}>
-                        {u.username} ({u.email})
+                        {u.username ? u.username.charAt(0).toUpperCase() + u.username.slice(1) : u.email}
                       </option>
                     ))}
                   </select>
@@ -301,9 +305,35 @@ export const Expenses: React.FC = () => {
           <div className="lg:col-span-2 space-y-6">
             <div className="glass-card p-6 rounded-2xl border border-slate-800">
               <h3 className="font-bold text-white text-lg mb-3">Expenses & Meal Rate Calculation</h3>
-              <p className="text-xs text-slate-400 leading-relaxed">
+              <p className="text-xs text-slate-400 leading-relaxed mb-6">
                 As Mess Manager, every expense logged here adjusts the live meal rate across the system.
               </p>
+
+              <div className="grid grid-cols-1 md:grid-cols-1 gap-6">
+                {/* Recent Expenses */}
+                <div className="bg-slate-900/60 p-4 rounded-xl border border-slate-800">
+                  <h4 className="font-bold text-white text-sm mb-3 flex items-center gap-2 border-b border-slate-800 pb-2">
+                    <Receipt className="w-4 h-4 text-rose-400" /> Recent Expenses
+                  </h4>
+                  <div className="space-y-3">
+                    {recentExpenses.length === 0 ? (
+                      <p className="text-xs text-slate-500 text-center py-2">No expenses found.</p>
+                    ) : (
+                      recentExpenses.map((exp) => (
+                        <div key={exp._id} className="flex justify-between items-center text-xs">
+                          <div className="truncate pr-2">
+                            <p className="text-white font-medium truncate">{exp.summary || exp.itemDetails || 'Expense'}</p>
+                            <p className="text-slate-500 text-[10px]">{new Date(exp.date).toLocaleDateString()}</p>
+                          </div>
+                          <span className="text-rose-400 font-bold bg-rose-500/10 px-2 py-1 rounded shrink-0">
+                            ৳{Number(exp.amount).toLocaleString()}
+                          </span>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>

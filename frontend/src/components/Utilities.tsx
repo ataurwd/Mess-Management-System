@@ -35,6 +35,7 @@ interface UtilityPayment {
   month: string;
   date: string;
   paymentMethod: string;
+  utilityType?: string;
   note?: string;
 }
 
@@ -57,6 +58,7 @@ export const Utilities: React.FC = () => {
   const [selectedUser, setSelectedUser] = useState('');
   const [payAmount, setPayAmount] = useState<number | string>('');
   const [payMethod, setPayMethod] = useState('Cash');
+  const [payUtilityType, setPayUtilityType] = useState('General Utility');
   const [payNote, setPayNote] = useState('');
   const [payMessage, setPayMessage] = useState('');
   const [payError, setPayError] = useState('');
@@ -149,7 +151,7 @@ export const Utilities: React.FC = () => {
   });
 
   const addPaymentMutation = useMutation({
-    mutationFn: async (payload: { userId: string; amount: number; month: string; paymentMethod: string; note: string }) => {
+    mutationFn: async (payload: { userId: string; amount: number; month: string; paymentMethod: string; utilityType: string; note: string }) => {
       const res = await api.post('/v1/utility/payments', payload);
       return res.data;
     },
@@ -205,6 +207,7 @@ export const Utilities: React.FC = () => {
       amount: Number(payAmount),
       month,
       paymentMethod: payMethod,
+      utilityType: payUtilityType,
       note: payNote,
     });
   };
@@ -232,11 +235,19 @@ export const Utilities: React.FC = () => {
     });
 
     return Array.from(map.values()).map((item) => {
-      const due = perPersonUtility - item.paid;
-      let status: 'paid' | 'partial' | 'unpaid' = 'unpaid';
-      if (item.paid >= perPersonUtility && perPersonUtility > 0) status = 'paid';
+      const difference = perPersonUtility - item.paid;
+      let status: 'paid' | 'partial' | 'unpaid' | 'overpaid' = 'unpaid';
+      
+      if (item.paid > perPersonUtility) status = 'overpaid';
+      else if (item.paid === perPersonUtility && perPersonUtility > 0) status = 'paid';
       else if (item.paid > 0) status = 'partial';
-      return { ...item, due: Math.max(0, due), status };
+      
+      return { 
+        ...item, 
+        due: Math.max(0, difference), 
+        refund: Math.max(0, -difference),
+        status 
+      };
     });
   }, [users, payments, perPersonUtility, month]);
 
@@ -247,6 +258,7 @@ export const Utilities: React.FC = () => {
   const filteredPayments = payments.filter((item) =>
     (item.username || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
     (item.month || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (item.utilityType || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
     (item.paymentMethod || '').toLowerCase().includes(searchTerm.toLowerCase())
   );
 
@@ -331,7 +343,7 @@ export const Utilities: React.FC = () => {
                 <th className="py-3 px-4">Utility Share</th>
                 <th className="py-3 px-4">Amount Paid</th>
                 <th className="py-3 px-4">Due Balance</th>
-                <th className="py-3 px-4">Status</th>
+                <th className="py-3 px-4">Refund / Extra</th>
                 {isAdmin && <th className="py-3 px-4 text-right font-bold">Action</th>}
               </tr>
             </thead>
@@ -353,16 +365,8 @@ export const Utilities: React.FC = () => {
                   <td className="py-3.5 px-4 font-extrabold text-rose-400">
                     ৳{item.due.toLocaleString()}
                   </td>
-                  <td className="py-3.5 px-4">
-                    <span className={`px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider ${
-                      item.status === 'paid'
-                        ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30'
-                        : item.status === 'partial'
-                        ? 'bg-amber-500/10 text-amber-400 border border-amber-500/30'
-                        : 'bg-rose-500/10 text-rose-400 border border-rose-500/30'
-                    }`}>
-                      {item.status}
-                    </span>
+                  <td className="py-3.5 px-4 font-extrabold text-blue-400">
+                    ৳{item.refund.toLocaleString()}
                   </td>
                   {isAdmin && (
                     <td className="py-3.5 px-4 text-right">
@@ -523,7 +527,7 @@ export const Utilities: React.FC = () => {
         </div>
 
         {/* Member Payments Log History Table */}
-        <div className={`${isAdmin ? 'lg:col-span-2' : 'lg:col-span-1'} glass-card p-6 rounded-2xl border border-slate-800 space-y-4`}>
+        <div className={`${isAdmin ? 'lg:col-span-3' : 'lg:col-span-1'} glass-card p-6 rounded-2xl border border-slate-800 space-y-4`}>
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800 pb-4">
             <div>
               <h3 className="font-bold text-white text-lg">Member Utility Payment Logs</h3>
@@ -553,6 +557,7 @@ export const Utilities: React.FC = () => {
                   <tr className="border-b border-slate-800 text-slate-400 font-bold uppercase">
                     <th className="py-3 px-4">Member Name</th>
                     <th className="py-3 px-4">Amount Paid</th>
+                    <th className="py-3 px-4">Bill Type</th>
                     <th className="py-3 px-4">Month</th>
                     <th className="py-3 px-4">Method</th>
                     <th className="py-3 px-4">Date</th>
@@ -564,6 +569,7 @@ export const Utilities: React.FC = () => {
                     <tr key={item._id} className="hover:bg-slate-800/40">
                       <td className="py-3.5 px-4 font-bold text-white">{item.username || 'Member'}</td>
                       <td className="py-3.5 px-4 font-extrabold text-emerald-400">৳{Number(item.amount).toLocaleString()}</td>
+                      <td className="py-3.5 px-4 text-amber-400 font-semibold">{item.utilityType || 'General'}</td>
                       <td className="py-3.5 px-4 text-slate-300">
                         <span className="px-2 py-0.5 bg-slate-800 rounded border border-slate-700">{item.month}</span>
                       </td>
@@ -623,7 +629,7 @@ export const Utilities: React.FC = () => {
                 >
                   {users.map((u) => (
                     <option key={u._id} value={u._id}>
-                      {u.username} ({u.email})
+                      {u.username ? u.username.charAt(0).toUpperCase() + u.username.slice(1) : u.email}
                     </option>
                   ))}
                 </select>
@@ -654,6 +660,22 @@ export const Utilities: React.FC = () => {
                   onChange={(e) => setMonth(e.target.value)}
                   className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-amber-500"
                 />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-400 mb-1">Utility Type</label>
+                <select
+                  value={payUtilityType}
+                  onChange={(e) => setPayUtilityType(e.target.value)}
+                  className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-amber-500"
+                >
+                  <option value="General Utility">General Utility ⚡💧🔥</option>
+                  <option value="Electricity Bill">Electricity Bill ⚡</option>
+                  <option value="Gas Bill">Gas Bill 🔥</option>
+                  <option value="Water Bill">Water Bill 💧</option>
+                  <option value="Wi-Fi Internet">Wi-Fi Internet 📶</option>
+                  <option value="Maid / Cook Salary">Maid / Cook Salary 🧹</option>
+                </select>
               </div>
 
               <div>

@@ -238,6 +238,8 @@ export const Meals: React.FC = () => {
     return userMealSummary.reduce((sum, item) => sum + item.totalMeals, 0);
   }, [userMealSummary]);
 
+  const recentMeals = [...mealsList].reverse().slice(0, 5);
+
   return (
     <div className="space-y-8">
       {/* Top Header + Sub Route Tabs */}
@@ -328,7 +330,7 @@ export const Meals: React.FC = () => {
                   >
                     {users.map((u) => (
                       <option key={u._id} value={u._id}>
-                        {u.username} ({u.email})
+                        {u.username ? u.username.charAt(0).toUpperCase() + u.username.slice(1) : u.email}
                       </option>
                     ))}
                   </select>
@@ -386,9 +388,35 @@ export const Meals: React.FC = () => {
           <div className="lg:col-span-2 space-y-6">
             <div className="glass-card p-6 rounded-2xl border border-slate-800">
               <h3 className="font-bold text-white text-lg mb-2">Real-Time Meal Tracking</h3>
-              <p className="text-xs text-slate-400 leading-relaxed">
+              <p className="text-xs text-slate-400 leading-relaxed mb-6">
                 Meal counts logged here automatically update monthly total meals and cost-per-meal calculations across the system.
               </p>
+
+              <div className="grid grid-cols-1 gap-6">
+                {/* Recent Meals */}
+                <div className="bg-slate-900/60 p-4 rounded-xl border border-slate-800">
+                  <h4 className="font-bold text-white text-sm mb-3 flex items-center gap-2 border-b border-slate-800 pb-2">
+                    <UtensilsCrossed className="w-4 h-4 text-emerald-400" /> Recent Meals
+                  </h4>
+                  <div className="space-y-3">
+                    {recentMeals.length === 0 ? (
+                      <p className="text-xs text-slate-500 text-center py-2">No meals found.</p>
+                    ) : (
+                      recentMeals.map((meal) => (
+                        <div key={meal._id} className="flex justify-between items-center text-xs">
+                          <div>
+                            <p className="text-white font-medium">{meal.username || 'Member'}</p>
+                            <p className="text-slate-500 text-[10px]">{new Date(meal.date).toLocaleDateString()}</p>
+                          </div>
+                          <span className="text-emerald-400 font-bold bg-emerald-500/10 px-2 py-1 rounded">
+                            {meal.numberOfMeal} meals
+                          </span>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>

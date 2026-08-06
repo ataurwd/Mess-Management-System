@@ -9,6 +9,7 @@ const utilityPaymentSchema = new schema({
     month: { type: String, required: true },
     date: { type: Date, default: Date.now },
     paymentMethod: { type: String, default: 'Cash' },
+    utilityType: { type: String, default: 'General Utility' },
     note: { type: String, default: '' },
 }, { versionKey: false });
 

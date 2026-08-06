@@ -22,17 +22,19 @@ import {
 interface SidebarProps {
   user: any;
   onLogout: () => void;
+  collapsed: boolean;
+  setCollapsed: (val: boolean) => void;
+  mobileOpen: boolean;
+  setMobileOpen: (val: boolean) => void;
 }
 
-export const Sidebar: React.FC<SidebarProps> = ({ user, onLogout }) => {
-  const [collapsed, setCollapsed] = useState(false);
-  const [mobileOpen, setMobileOpen] = useState(false);
+export const Sidebar: React.FC<SidebarProps> = ({ user, onLogout, collapsed, setCollapsed, mobileOpen, setMobileOpen }) => {
 
   const menuItems = [
     { path: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { path: '/meals', label: 'Daily Meals', icon: UtensilsCrossed },
-    { path: '/balances', label: 'Deposits / Balance', icon: Wallet },
-    { path: '/expenses', label: 'Expenses', icon: Receipt },
+    { path: '/balances', label: 'Mill Deposit', icon: Wallet },
+    { path: '/expenses', label: 'Mill Expenses', icon: Receipt },
     { path: '/house-rent', label: 'House Rent', icon: Home },
     { path: '/utilities', label: 'Utility Bills', icon: Zap },
     { path: '/settlement', label: 'Financial Ledger', icon: Scale },
@@ -43,21 +45,6 @@ export const Sidebar: React.FC<SidebarProps> = ({ user, onLogout }) => {
 
   return (
     <>
-      {/* Mobile Top Bar with Menu Trigger */}
-      <div className="lg:hidden sticky top-0 z-40 bg-slate-900/90 backdrop-blur-md border-b border-slate-800 px-4 py-3 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="p-2 bg-emerald-600 rounded-xl text-white">
-            <Building2 className="w-5 h-5" />
-          </div>
-          <span className="font-extrabold text-white text-sm">MessManager</span>
-        </div>
-        <button
-          onClick={() => setMobileOpen(!mobileOpen)}
-          className="p-2 rounded-xl bg-slate-800 text-slate-300 hover:text-white"
-        >
-          {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-        </button>
-      </div>
 
       {/* Backdrop for Mobile Drawer */}
       {mobileOpen && (

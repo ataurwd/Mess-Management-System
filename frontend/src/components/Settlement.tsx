@@ -78,6 +78,28 @@ export const Settlement: React.FC = () => {
     },
   });
 
+  // 6. Fetch House Rent Payments
+  const { data: rentPayments = [] } = useQuery<any[]>({
+    queryKey: ['houseRentPayments'],
+    queryFn: async () => {
+      try {
+        const res = await api.get('/v1/house-rent/payments');
+        return Array.isArray(res.data?.data) ? res.data.data : [];
+      } catch (e) { return []; }
+    },
+  });
+
+  // 7. Fetch Utility Payments
+  const { data: utilityPayments = [] } = useQuery<any[]>({
+    queryKey: ['utilityPayments'],
+    queryFn: async () => {
+      try {
+        const res = await api.get('/v1/utility/payments');
+        return Array.isArray(res.data?.data) ? res.data.data : [];
+      } catch (e) { return []; }
+    },
+  });
+
   // Live Meal Rate Calculation
   const totalExpense = useMemo(() => expenses.reduce((sum, e) => sum + (Number(e.amount) || 0), 0), [expenses]);
   const totalMeals = useMemo(() => meals.reduce((sum, m) => sum + (Number(m.numberOfMeal) || 0), 0), [meals]);
@@ -93,10 +115,20 @@ export const Settlement: React.FC = () => {
   // Calculate Net Position per Member
   const settlementData = useMemo(() => {
     return users.map((user) => {
-      // Total Deposits by User
-      const userDeposits = balances
+      // Meal Deposits (stored in balances)
+      const mealDeposit = balances
         .filter((b) => b.userId === user._id)
         .reduce((sum, b) => sum + (Number(b.amount) || 0), 0);
+
+      // House Rent Payments
+      const rentDeposit = rentPayments
+        .filter((p) => p.userId === user._id)
+        .reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
+        
+      // Utility Payments
+      const utilityDeposit = utilityPayments
+        .filter((p) => p.userId === user._id)
+        .reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
 
       // Total Meals by User
       const userMeals = meals
@@ -104,31 +136,38 @@ export const Settlement: React.FC = () => {
         .reduce((sum, m) => sum + (Number(m.numberOfMeal) || 0), 0);
 
       const mealCost = Math.round(userMeals * liveMealRate);
-      const totalCostShare = mealCost + perPersonRent + perPersonUtility;
-      const netPosition = userDeposits - totalCostShare;
+      const rentCost = perPersonRent;
+      const utilityCost = perPersonUtility;
+      const totalCostShare = mealCost + rentCost + utilityCost;
+      
+      const totalDeposit = mealDeposit + rentDeposit + utilityDeposit;
+      const netPosition = totalDeposit - totalCostShare;
 
       return {
         userId: user._id,
         username: user.username || user.email,
-        userDeposits,
+        mealDeposit,
+        rentDeposit,
+        utilityDeposit,
+        totalDeposit,
         userMeals,
         mealCost,
-        rentShare: perPersonRent,
-        utilityShare: perPersonUtility,
+        rentCost,
+        utilityCost,
         totalCostShare,
         netPosition,
         status: netPosition >= 0 ? 'refund' : 'due',
       };
     });
-  }, [users, balances, meals, liveMealRate, perPersonRent, perPersonUtility]);
+  }, [users, balances, meals, rentPayments, utilityPayments, liveMealRate, perPersonRent, perPersonUtility]);
 
   const totalRefunds = settlementData.filter(s => s.netPosition > 0).reduce((sum, s) => sum + s.netPosition, 0);
   const totalDues = settlementData.filter(s => s.netPosition < 0).reduce((sum, s) => sum + Math.abs(s.netPosition), 0);
 
   const handleExportCSV = () => {
-    const headers = ['Member Name,Total Deposits (৳),Total Meals,Meal Cost (৳),Rent Share (৳),Utility Share (৳),Total Cost (৳),Net Position (৳),Status\n'];
+    const headers = ['Member Name,Meal Deposit (৳),Rent Deposit (৳),Utility Deposit (৳),Total Deposit (৳),Meals Count,Meal Cost (৳),Rent Cost (৳),Utility Cost (৳),Total Cost (৳),Net Position (৳),Status\n'];
     const rows = settlementData.map(s => 
-      `"${s.username}",${s.userDeposits},${s.userMeals},${s.mealCost},${s.rentShare},${s.utilityShare},${s.totalCostShare},${s.netPosition},"${s.status.toUpperCase()}"\n`
+      `"${s.username}",${s.mealDeposit},${s.rentDeposit},${s.utilityDeposit},${s.totalDeposit},${s.userMeals},${s.mealCost},${s.rentCost},${s.utilityCost},${s.totalCostShare},${s.netPosition},"${s.status.toUpperCase()}"\n`
     );
     const blob = new Blob([...headers, ...rows], { type: 'text/csv' });
     const url = window.URL.createObjectURL(blob);
@@ -212,13 +251,15 @@ export const Settlement: React.FC = () => {
             <thead>
               <tr className="border-b border-slate-800 text-slate-400 font-bold uppercase tracking-wider">
                 <th className="py-3.5 px-4">Member Name</th>
-                <th className="py-3.5 px-4">Total Deposits</th>
-                <th className="py-3.5 px-4">Meals Count</th>
-                <th className="py-3.5 px-4">Meal Expense</th>
-                <th className="py-3.5 px-4">Rent Share</th>
-                <th className="py-3.5 px-4">Utility Share</th>
-                <th className="py-3.5 px-4">Total Cost</th>
-                <th className="py-3.5 px-4">Net Settlement Position</th>
+                <th className="py-3.5 px-4">Meal Dep.</th>
+                <th className="py-3.5 px-4">Rent Dep.</th>
+                <th className="py-3.5 px-4">Util Dep.</th>
+                <th className="py-3.5 px-4 bg-emerald-900/20 text-emerald-400">Total Dep.</th>
+                <th className="py-3.5 px-4">Meal Cost</th>
+                <th className="py-3.5 px-4">Rent Cost</th>
+                <th className="py-3.5 px-4">Util Cost</th>
+                <th className="py-3.5 px-4 bg-rose-900/20 text-rose-400">Total Cost</th>
+                <th className="py-3.5 px-4">Net Position</th>
                 <th className="py-3.5 px-4 text-right">Status</th>
               </tr>
             </thead>
@@ -232,21 +273,27 @@ export const Settlement: React.FC = () => {
                     <span>{item.username}</span>
                   </td>
                   <td className="py-4 px-4 font-bold text-blue-400 text-sm">
-                    ৳{item.userDeposits.toLocaleString()}
-                  </td>
-                  <td className="py-4 px-4 text-slate-300 font-medium">
-                    {item.userMeals} Meals
+                    ৳{item.mealDeposit.toLocaleString()}
                   </td>
                   <td className="py-4 px-4 text-slate-300">
-                    ৳{item.mealCost.toLocaleString()}
+                    ৳{item.rentDeposit.toLocaleString()}
                   </td>
                   <td className="py-4 px-4 text-slate-300">
-                    ৳{item.rentShare.toLocaleString()}
+                    ৳{item.utilityDeposit.toLocaleString()}
+                  </td>
+                  <td className="py-4 px-4 font-bold text-emerald-400 bg-emerald-900/10">
+                    ৳{item.totalDeposit.toLocaleString()}
                   </td>
                   <td className="py-4 px-4 text-slate-300">
-                    ৳{item.utilityShare.toLocaleString()}
+                    ৳{item.mealCost.toLocaleString()} <span className="text-[10px] text-slate-500 font-medium">({item.userMeals} Meals)</span>
                   </td>
-                  <td className="py-4 px-4 font-semibold text-slate-200">
+                  <td className="py-4 px-4 text-slate-300">
+                    ৳{item.rentCost.toLocaleString()}
+                  </td>
+                  <td className="py-4 px-4 text-slate-300">
+                    ৳{item.utilityCost.toLocaleString()}
+                  </td>
+                  <td className="py-4 px-4 font-bold text-rose-400 bg-rose-900/10">
                     ৳{item.totalCostShare.toLocaleString()}
                   </td>
                   <td className={`py-4 px-4 font-extrabold text-sm ${item.netPosition >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>

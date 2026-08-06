@@ -125,6 +125,8 @@ export const Balances: React.FC = () => {
     (item.category || '').toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  const recentDeposits = [...depositsList].reverse().slice(0, 5);
+
   return (
     <div className="space-y-8">
       {/* Top Header + Sub Route Tabs */}
@@ -203,7 +205,7 @@ export const Balances: React.FC = () => {
                   >
                     {users.map((u) => (
                       <option key={u._id} value={u._id}>
-                        {u.username} ({u.email})
+                        {u.username ? u.username.charAt(0).toUpperCase() + u.username.slice(1) : u.email}
                       </option>
                     ))}
                   </select>
@@ -279,9 +281,35 @@ export const Balances: React.FC = () => {
           <div className="lg:col-span-2 space-y-6">
             <div className="glass-card p-6 rounded-2xl border border-slate-800">
               <h3 className="font-bold text-white text-lg mb-2">Manager Deposit Control</h3>
-              <p className="text-xs text-slate-400 leading-relaxed">
+              <p className="text-xs text-slate-400 leading-relaxed mb-6">
                 As a Mess Manager/Admin, you can record funds received from members. Standard members can view all deposits in real time.
               </p>
+
+              <div className="grid grid-cols-1 gap-6">
+                {/* Recent Deposits */}
+                <div className="bg-slate-900/60 p-4 rounded-xl border border-slate-800">
+                  <h4 className="font-bold text-white text-sm mb-3 flex items-center gap-2 border-b border-slate-800 pb-2">
+                    <Wallet className="w-4 h-4 text-blue-400" /> Recent Deposits
+                  </h4>
+                  <div className="space-y-3">
+                    {recentDeposits.length === 0 ? (
+                      <p className="text-xs text-slate-500 text-center py-2">No deposits found.</p>
+                    ) : (
+                      recentDeposits.map((dep) => (
+                        <div key={dep._id} className="flex justify-between items-center text-xs">
+                          <div>
+                            <p className="text-white font-medium">{dep.username || 'Member'}</p>
+                            <p className="text-slate-500 text-[10px]">{new Date(dep.date || new Date()).toLocaleDateString()}</p>
+                          </div>
+                          <span className="text-blue-400 font-bold bg-blue-500/10 px-2 py-1 rounded">
+                            ৳{Number(dep.amount).toLocaleString()}
+                          </span>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>

@@ -211,16 +211,17 @@ export const HouseRent: React.FC = () => {
     });
 
     return Array.from(map.values()).map((item) => {
-      const due = perPersonRent - item.totalPaid;
-      let status: 'paid' | 'partial' | 'unpaid' = 'unpaid';
-      if (item.totalPaid >= perPersonRent) {
-        status = 'paid';
-      } else if (item.totalPaid > 0) {
-        status = 'partial';
-      }
+      const difference = perPersonRent - item.totalPaid;
+      let status: 'paid' | 'partial' | 'unpaid' | 'overpaid' = 'unpaid';
+      
+      if (item.totalPaid > perPersonRent) status = 'overpaid';
+      else if (item.totalPaid === perPersonRent && perPersonRent > 0) status = 'paid';
+      else if (item.totalPaid > 0) status = 'partial';
+      
       return {
         ...item,
-        due: Math.max(0, due),
+        due: Math.max(0, difference),
+        refund: Math.max(0, -difference),
         status,
       };
     });
@@ -346,6 +347,7 @@ export const HouseRent: React.FC = () => {
                 <th className="py-3 px-4">Rent Share</th>
                 <th className="py-3 px-4">Amount Paid</th>
                 <th className="py-3 px-4">Due Balance</th>
+                <th className="py-3 px-4">Refund / Extra</th>
                 <th className="py-3 px-4">Payment Status</th>
                 {isAdmin && <th className="py-3 px-4 text-right">Quick Action</th>}
               </tr>
@@ -368,14 +370,20 @@ export const HouseRent: React.FC = () => {
                   <td className="py-3.5 px-4 font-extrabold text-rose-400">
                     ৳{item.due.toLocaleString()}
                   </td>
+                  <td className="py-3.5 px-4 font-extrabold text-blue-400">
+                    ৳{item.refund.toLocaleString()}
+                  </td>
                   <td className="py-3.5 px-4">
                     <span className={`px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider flex items-center gap-1.5 w-fit ${
-                      item.status === 'paid'
+                      item.status === 'overpaid'
+                        ? 'bg-blue-500/10 text-blue-400 border border-blue-500/30'
+                        : item.status === 'paid'
                         ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30'
                         : item.status === 'partial'
                         ? 'bg-amber-500/10 text-amber-400 border border-amber-500/30'
                         : 'bg-rose-500/10 text-rose-400 border border-rose-500/30'
                     }`}>
+                      {item.status === 'overpaid' && <CheckCircle2 className="w-3 h-3" />}
                       {item.status === 'paid' && <CheckCircle2 className="w-3 h-3" />}
                       {item.status === 'partial' && <Clock className="w-3 h-3" />}
                       {item.status === 'unpaid' && <AlertCircle className="w-3 h-3" />}
@@ -437,7 +445,7 @@ export const HouseRent: React.FC = () => {
                 >
                   {users.map((u) => (
                     <option key={u._id} value={u._id}>
-                      {u.username} ({u.email})
+                      {u.username ? u.username.charAt(0).toUpperCase() + u.username.slice(1) : u.email}
                     </option>
                   ))}
                 </select>
