@@ -33,12 +33,12 @@ export const Sidebar: React.FC<SidebarProps> = ({ user, onLogout, collapsed, set
 
   const menuItems = [
     { path: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+    { path: '/settlement', label: 'Financial Ledger', icon: Scale },
     { path: '/meals', label: 'Daily Meals', icon: UtensilsCrossed },
     { path: '/balances', label: 'Mill Deposit', icon: Wallet },
     { path: '/expenses', label: 'Mill Expenses', icon: Receipt },
     { path: '/house-rent', label: 'House Rent', icon: Home },
     { path: '/utilities', label: 'Utility Bills', icon: Zap },
-    { path: '/settlement', label: 'Financial Ledger', icon: Scale },
     { path: '/bazaar-schedule', label: 'Bazaar Schedule', icon: ShoppingBag },
     { path: '/categories', label: 'Categories', icon: Tags },
     { path: '/members', label: 'Mess Members', icon: Users },
